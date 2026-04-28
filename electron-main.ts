@@ -1,6 +1,6 @@
 import { app, BrowserWindow, Menu, ipcMain } from 'electron';
 import path from 'path';
-import isDev from 'electron-is-dev';
+const isDev = !require('electron').app.isPackaged;
 
 let mainWindow: BrowserWindow | null;
 
