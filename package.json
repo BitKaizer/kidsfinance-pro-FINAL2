@@ -1,6 +1,7 @@
 {
   "name": "kidsfinance-pro",
   "version": "1.0.0",
+  "main": "electron-main.js",
   "type": "module",
   "license": "MIT",
   "scripts": {
