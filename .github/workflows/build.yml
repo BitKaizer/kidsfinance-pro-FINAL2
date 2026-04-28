@@ -3,7 +3,7 @@ name: Build KidsFinance Pro
 on:
   push:
     branches: [main, master]
-  workflow_dispatch: # Ermöglicht manuellen Start per Klick
+  workflow_dispatch:
 
 jobs:
   build-windows:
@@ -31,10 +31,13 @@ jobs:
       - name: Electron kompilieren
         run: npx tsc electron-main.ts --outDir . --module commonjs --target es2020 --esModuleInterop true --skipLibCheck true
 
+      - name: Main entry setzen
+        run: node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));p.main='electron-main.js';delete p.type;fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
+
       - name: Windows Installer bauen
         run: npx electron-builder --win --publish never
 
-      - name: Installer hochladen (Download-Artefakt)
+      - name: Installer hochladen
         uses: actions/upload-artifact@v4
         with:
           name: KidsFinance-Pro-Windows-Installer
