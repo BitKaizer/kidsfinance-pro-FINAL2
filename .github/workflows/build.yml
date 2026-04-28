@@ -25,14 +25,39 @@ jobs:
       - name: Abhängigkeiten installieren
         run: pnpm install --no-frozen-lockfile
 
+      - name: Electron installieren
+        run: pnpm add -D electron@28 electron-builder@24 --no-frozen-lockfile
+
       - name: React-App bauen
         run: pnpm run build
 
-      - name: Electron kompilieren
-        run: npx tsc electron-main.ts --outDir . --module commonjs --target es2020 --esModuleInterop true --skipLibCheck true
-
-      - name: Main entry setzen
-        run: node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));p.main='electron-main.js';delete p.type;fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
+      - name: Electron Main erstellen
+        run: |
+          node -e "
+          const fs = require('fs');
+          const content = \`const { app, BrowserWindow, Menu, ipcMain } = require('electron');
+          const path = require('path');
+          let mainWindow;
+          function createWindow() {
+            mainWindow = new BrowserWindow({
+              width: 1200, height: 800, minWidth: 400, minHeight: 600,
+              webPreferences: { preload: path.join(__dirname, 'preload.js'), nodeIntegration: false, contextIsolation: true }
+            });
+            const indexPath = path.join(__dirname, 'dist', 'public', 'index.html');
+            mainWindow.loadFile(indexPath);
+            mainWindow.on('closed', () => { mainWindow = null; });
+          }
+          app.on('ready', createWindow);
+          app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+          app.on('activate', () => { if (mainWindow === null) createWindow(); });
+          ipcMain.handle('export-data', async (event, data) => ({ success: true, data }));
+          \`;
+          fs.writeFileSync('electron-main.js', content);
+          const pkg = JSON.parse(fs.readFileSync('package.json'));
+          pkg.main = 'electron-main.js';
+          delete pkg.type;
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+          "
 
       - name: Windows Installer bauen
         run: npx electron-builder --win --publish never
