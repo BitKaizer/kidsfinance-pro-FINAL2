@@ -1,0 +1,42 @@
+name: Build KidsFinance Pro
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch: # Ermöglicht manuellen Start per Klick
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Code herunterladen
+        uses: actions/checkout@v4
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: pnpm installieren
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - name: Abhängigkeiten installieren
+        run: pnpm install
+
+      - name: React-App bauen
+        run: pnpm run build
+
+      - name: Electron kompilieren
+        run: npx tsc electron-main.ts --outDir . --module commonjs --target es2020 --esModuleInterop true --skipLibCheck true
+
+      - name: Windows Installer bauen
+        run: npx electron-builder --win --publish never
+
+      - name: Installer hochladen (Download-Artefakt)
+        uses: actions/upload-artifact@v4
+        with:
+          name: KidsFinance-Pro-Windows-Installer
+          path: dist-electron/*.exe
+          retention-days: 30
