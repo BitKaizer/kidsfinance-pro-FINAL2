@@ -26,7 +26,7 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Electron installieren
-        run: pnpm add -D electron@28 electron-builder@24 --no-frozen-lockfile
+        run: pnpm add -D electron@28 electron-builder@24
 
       - name: React-App bauen
         run: pnpm run build
