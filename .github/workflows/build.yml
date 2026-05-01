@@ -31,34 +31,15 @@ jobs:
       - name: React-App bauen
         run: pnpm run build
 
-      - name: package.json fixen
+      - name: package.json und electron-main.js fixen
         shell: pwsh
         run: |
           $pkg = Get-Content package.json | ConvertFrom-Json
           $pkg.main = "electron-main.js"
           $pkg.PSObject.Properties.Remove("type")
           $pkg | ConvertTo-Json -Depth 10 | Set-Content package.json
-
-      - name: electron-main.js erstellen
-        shell: pwsh
-        run: |
-          $content = @'
-          const { app, BrowserWindow, ipcMain } = require('electron');
-          const path = require('path');
-          let mainWindow;
-          function createWindow() {
-            mainWindow = new BrowserWindow({
-              width: 1200, height: 800,
-              webPreferences: { nodeIntegration: false, contextIsolation: true }
-            });
-            mainWindow.loadFile(path.join(__dirname, 'dist', 'public', 'index.html'));
-            mainWindow.on('closed', () => { mainWindow = null; });
-          }
-          app.on('ready', createWindow);
-          app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
-          app.on('activate', () => { if (!mainWindow) createWindow(); });
-          '@
-          Set-Content -Path electron-main.js -Value $content
+          $code = 'const{app,BrowserWindow,ipcMain}=require("electron");const path=require("path");let w;function c(){w=new BrowserWindow({width:1200,height:800,webPreferences:{nodeIntegration:false,contextIsolation:true}});const f=path.join(app.getAppPath(),"dist","public","index.html");w.loadFile(f);w.on("closed",()=>{w=null})}app.on("ready",c);app.on("window-all-closed",()=>{if(process.platform!=="darwin")app.quit()});app.on("activate",()=>{if(!w)c()});'
+          Set-Content -Path electron-main.js -Value $code
 
       - name: Windows Installer bauen
         run: npx electron-builder --win --publish never
